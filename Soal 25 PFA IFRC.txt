@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis HOTS: Psychological First Aid (PFA)</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--light);
+            height: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--secondary);
+            transition: width 0.3s ease;
+        }
+
+        .question-number {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: #ffffff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 0.98rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            line-height: 1.4;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--secondary);
+            background-color: #f0f8ff;
+        }
+
+        .option-btn.correct {
+            background-color: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+            font-weight: bold;
+        }
+
+        .option-btn.incorrect {
+            background-color: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        .footer-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light);
+        }
+
+        .btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .result-screen {
+            text-align: center;
+            display: none;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.4rem;
+            }
+            .option-btn {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Kuis HOTS: Psychological First Aid</h1>
+        <div class="subtitle">Referensi: IFRC Psychosocial Centre Guide</div>
+    </header>
+
+    <div id="quiz-screen">
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        
+        <span class="question-number" id="question-number">Soal 1 dari 25</span>
+        <div class="question-text" id="question-text">Teks pertanyaan akan muncul di sini...</div>
+        
+        <div class="options-container" id="options-container">
+            </div>
+
+        <div class="footer-controls">
+            <span id="score-counter">Skor: 0</span>
+            <button class="btn" id="next-btn" onclick="nextQuestion()" disabled>Lanjut</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="result-screen">
+        <h2>Kuis Selesai!</h2>
+        <p>Terima kasih telah menyelesaikan kuis Psychological First Aid.</p>
+        <div class="score-display" id="final-score">0 / 25</div>
+        <p id="feedback-text"></p>
+        <button class="btn" onclick="restartQuiz()">Ulangi Kuis</button>
+    </div>
+</div>
+
+<script>
+const quizData = [
+    {
+        q: "1. Seorang relawan PFA tiba di lokasi bencana tanah longsor. Ia melihat seorang penyintas duduk sendirian, gemetaran, dan tidak merespons panggilan. Manakah langkah prinsip aksi PFA yang paling tepat dan berurutan harus dilakukan relawan tersebut?",
+        options: [
+            "A. Langsung menanyakan nama penyintas, memberikan makanan, dan menghubungkan ke posko medis.",
+            "B. Mengamati keamanan area sekitar, mengevaluasi kebutuhan mendesak penyintas, lalu mendengarkan dan mendampingi.",
+            "C. Mengajak penyintas menceritakan secara detail kronologi kejadian tanah longsor agar emosinya lega.",
+            "D. Merujuk penyintas ke psikiater karena tidak mampu merespons pembicaraan.",
+            "E. Menyuruh penyintas segera mengambil bantuan logistik di pos penampungan."
+        ],
+        answer: 1
+    },
+    {
+        q: "2. Dalam konsep pertolongan pertama psikologis (PFA), mengapa tindakan mendesak penyintas untuk menganalisis atau menceritakan kembali peristiwa traumatik secara rinci dilarang keras?",
+        options: [
+            "A. Karena relawan tidak memiliki waktu yang cukup untuk mendengarkan cerita panjang.",
+            "B. Karena cerita yang berulang dapat memicu retraumatisasi dan memperburuk kondisi distres.",
+            "C. Karena PFA hanya berfokus pada pemberian bantuan fisik seperti makanan dan pakaian.",
+            "D. Karena analisis kronologi kejadian merupakan tugas eksklusif pihak kepolisian.",
+            "E. Karena penyintas trauma tidak diperbolehkan berbicara dengan siapapun selama masa krisis."
+        ],
+        answer: 1
+    },
+    {
+        q: "3. Perhatikan kondisi berikut:\n1. Seorang ibu menangis sesenggukan setelah kehilangan rumahnya akibat kebakaran.\n2. Seorang pria mengalami disorientasi total, tidak tidur selama 9 hari, dan mendengar suara-suara.\n3. Seorang remaja gelisah karena kehilangan dokumen sekolahnya.\n4. Seorang pria mengancam akan melukai dirinya sendiri dengan benda tajam.\n\nManakah dari kasus di atas yang tergolong reaksi kompleks dan memerlukan rujukan (referral) segera ke tenaga ahli?",
+        options: [
+            "A. 1 dan 3",
+            "B. 1 dan 4",
+            "C. 2 dan 4",
+            "D. 2 dan 3",
+            "E. 3 dan 4"
+        ],
+        answer: 2
+    },
+    {
+        q: "4. Seorang penyintas kecelakaan lalu lintas mengalami serangan panik dengan napas cepat dan sesak. Relawan PFA hendak memandu teknik pernapasan. Langkah evaluasi awal apa yang wajib dipastikan relawan sebelum menyimpulkan bahwa itu adalah serangan panik?",
+        options: [
+            "A. Memastikan penyintas telah memiliki asuransi kesehatan.",
+            "B. Memastikan bahwa sesak napas bukan disebabkan oleh kondisi medis fisik seperti serangan jantung atau asma.",
+            "C. Menanyakan apakah penyintas memiliki riwayat trauma masa kecil.",
+            "D. Meminta penyintas langsung minum air es dalam jumlah banyak.",
+            "E. Memaksa penyintas berdiri dan berjalan-jalan di sekitar lokasi."
+        ],
+        answer: 1
+    },
+    {
+        q: "5. Mengapa tindakan Psychoeducation dalam tahap Link sangat krusial bagi seseorang yang mengalami flashback pascatrauma?",
+        options: [
+            "A. Agar penyintas menyadari bahwa dirinya mengalami gangguan jiwa permanen.",
+            "B. Agar penyintas memahami bahwa flashback adalah reaksi normal tubuh terhadap kejadian abnormal.",
+            "C. Untuk menghapus ingatan buruk penyintas secara permanen melalui hipnoterapi.",
+            "D. Untuk memberikan obat penenang agar penyintas bisa tertidur.",
+            "E. Agar relawan bisa mendapatkan data statistik statistik korban bencana."
+        ],
+        answer: 1
+    },
+    {
+        q: "6. Ketika menangani anak-anak yang terdampak bencana, seorang penyedia PFA harus memahami bahwa ekspresi distres anak berbeda dengan orang dewasa. Manakah bentuk respons distres khas pada anak yang paling membutuhkan intervensi pendampingan khusus?",
+        options: [
+            "A. Anak menangis sebentar lalu kembali bermain dengan temannya.",
+            "B. Anak menolak makan sayur dan meminta buah-buahan.",
+            "C. Anak tiba-tiba menjadi sangat pasif, tidak mau berbicara (withdrawn), dan terus menempel erat pada pengasuhnya.",
+            "D. Anak bertanya kapan sekolahnya akan dibuka kembali.",
+            "E. Anak meminta dibujukkan mainan baru."
+        ],
+        answer: 2
+    },
+    {
+        q: "7. Seorang relawan merasa bersalah dan sangat sedih setelah mendengar kisah-kisah tragis dari para korban bencana hingga ia tidak bisa tidur dan terus terbayang. Berdasarkan pandangan Self-care dalam PFA, tindakan apa yang paling tepat dilakukan relawan tersebut?",
+        options: [
+            "A. Mengabaikan perasaan tersebut dan terus bekerja demi kemanusiaan.",
+            "B. Menatapkan tindakan Look, Listen, Link pada diri sendiri dan mencari dukungan sebaya (peer support) atau profesional.",
+            "C. Memaksa para korban untuk berhenti menceritakan hal-hal sedih.",
+            "D. Mengonsumsi obat tidur tanpa resep agar bisa beristirahat.",
+            "E. Menyalahkan organisasi atas ketidakmampuannya mengatasi stres."
+        ],
+        answer: 1
+    },
+    {
+        q: "8. Dalam prinsip Do No Harm, seorang relawan dilarang memberikan janji-janji palsu seperti 'Semua akan baik-baik saja dalam dua hari.' Mengapa sikap ini melanggar etika PFA?",
+        options: [
+            "A. Karena akan mengurangi waktu istirahat relawan.",
+            "B. Karena dapat merusak rasa percaya (trust) dan memperburuk distres psikologis penyintas ketika janji tidak terbukti.",
+            "C. Karena penyintas tidak menyukai ucapan yang terlalu optimistis.",
+            "D. Karena relawan akan dikenai sanksi pidana oleh pihak berwajib."
+        ],
+        answer: 1
+    },
+    {
+        q: "9. Manakah skenario berikut yang mencerminkan pelaksanaan prinsip LOOK yang paling komprehensif di area bencana?",
+        options: [
+            "A. Membagikan makanan ke semua orang tanpa memperhatikan keselamatan lokasi.",
+            "B. Langsung mewawancarai semua orang yang terlihat menangis di tepi jalan.",
+            "C. Mengidentifikasi potensi bahaya susulan, mencari korban cedera fisik/kebutuhan mendesak, dan mengamati reaksi emosional warga.",
+            "D. Mengumpulkan warga dalam satu ruangan besar untuk mendengarkan ceramah.",
+            "E. Mencari dokumen penting milik warga yang tertimbun bangunan."
+        ],
+        answer: 2
+    },
+    {
+        q: "10. Seorang penyintas bencana banjir menolak bantuan PFA dan menyatakan ingin sendirian. Bagaimana respons relawan PFA yang paling etis dan profesional?",
+        options: [
+            "A. Memaksa penyintas untuk menerima bantuan demi kesembuhan mentalnya.",
+            "B. Menghormati keputusan penyintas, memberikan ruang, namun memberi tahu cara mengakses bantuan jika ia membutuhkannya nanti.",
+            "C. Meninggalkan penyintas begitu saja tanpa memberikan informasi apapun.",
+            "D. Melaporakan penyintas ke pihak berwajib karena tidak kooperatif.",
+            "E. Mengkritik sikap penyintas di depan umum."
+        ],
+        answer: 1
+    },
+    {
+        q: "11. Rapat PFA in Groups (dukungan untuk tim) yang diadakan setelah operasi kemanusiaan memiliki komponen tertentu. Manakah komponen yang BUKAN bagian dari struktur rapat dukungan kelompok ini?",
+        options: [
+            "A. Peninjauan ulang fakta tindakan yang telah dilakukan selama krisis.",
+            "B. Menilai dan mengkritik kesalahan individu anggota tim secara terbuka di depan umum.",
+            "C. Mempromosikan self-care dan peer support.",
+            "D. Memeriksa kondisi emosional para peserta rapat.",
+            "E. Menghubungkan peserta dengan rujukan jika ada yang membutuhkan bantuan individual."
+        ],
+        answer: 1
+    },
+    {
+        q: "12. Mengapa kerahasiaan (confidentiality) cerita penyintas merupakan aspek vital dalam PFA, dan kapan kerahasiaan tersebut BISA dievaluasi untuk dilanggar/dikesampingkan?",
+        options: [
+            "A. Kerahasiaan dikesampingkan jika relawan ingin mengunggahnya ke media sosial.",
+            "B. Kerahasiaan dikesampingkan hanya jika ada risiko bahaya serius bagi keselamatan jiwa penyintas atau orang lain.",
+            "C. Kerahasiaan selalu bersifat mutlak dan tidak boleh dilanggar dalam situasi apapun.",
+            "D. Kerahasiaan dikesampingkan jika penyintas tidak membayar jasa PFA.",
+            "E. Kerahasiaan dikesampingkan apabila teman relawan ingin mendengarnya."
+        ],
+        answer: 1
+    },
+    {
+        q: "13. Manakah contoh penerapan tindakan LINK yang paling tepat pada korban krisis yang kehilangan kontak dengan keluarganya?",
+        options: [
+            "A. Menyuruh korban mencari keluarganya sendiri ke luar area penampungan.",
+            "B. Mengajari korban teknik relaksasi napas sampai keluarganya pulang.",
+            "C. Membantu mengisikan form pencarian orang hilang atau menyambungkan penyintas ke layanan pemulihan hubungan keluarga (Restoring Family Links).",
+            "D. Menyampaikan bahwa keluarganya kemungkinan besar tidak selamat agar ia siap mental.",
+            "E. Memberikan obat penenang agar korban tidak cemas memikirkan keluarga."
+        ],
+        answer: 2
+    },
+    {
+        q: "14. Faktor pelindung organisasi (organizational protective factors) sangat penting untuk mencegah burnout pada relawan. Manakah tindakan organisasi yang paling mendukung hal tersebut?",
+        options: [
+            "A. Memberikan beban kerja tanpa batas agar relawan tetap sibuk.",
+            "B. Mengadakan rapat rutin yang memfasilitasi komunikasi terbuka, mengapresiasi kerja relawan, serta menetapkan kebijakan kerja yang layak.",
+            "C. Meminta relawan menyelesaikan masalah kesehatan mental mereka secara mandiri.",
+            "D. Melarang relawan membicarakan kesulitan yang mereka alami selama di lapangan.",
+            "E. Membatasi akses relawan terhadap informasi operasional."
+        ],
+        answer: 1
+    },
+    {
+        q: "15. Seorang korban kekerasan berbasis gender (SGBV) memerlukan PFA. Tempat manakah yang paling memenuhi kriteria lokasi pemberian PFA untuk kasus ini?",
+        options: [
+            "A. Di tengah alun-alun kota yang ramai agar transparan.",
+            "B. Di dalam tenda posko utama yang dipenuhi banyak orang.",
+            "C. Di ruangan yang tenang, aman, dan tertutup dari pendengaran orang lain untuk menjaga martabat dan kerahasiaan.",
+            "D. Di dalam mobil ambulan yang sedang melaju cepat.",
+            "E. Di area pendaftaran logistik."
+        ],
+        answer: 2
+    },
+    {
+        q: "16. Mengapa mekanisme koping seperti mengonsumsi alkohol atau memutus kontak total dari interaksi sosial (social isolation) dikategorikan sebagai harmful coping methods?",
+        options: [
+            "A. Karena membutuhkan biaya finansial yang besar.",
+            "B. Karena merusak kesehatan fisik/mental jangka panjang dan memperlambat proses pemulihan trauma.",
+            "C. Karena menyulitkan relawan dalam mencatat data penyintas.",
+            "D. Karena melanggar norma kesopanan di tempat penampungan saja.",
+            "E. Karena mempercepat terjadinya depresi tanpa merusak fisik."
+        ],
+        answer: 1
+    },
+    {
+        q: "17. Apa perbedaan mendasar antara Stress biasa dan Distress berdasarkan panduan PFA?",
+        options: [
+            "A. Stres selalu berdampak negatif, sedangkan distres selalu berdampak positif.",
+            "B. Stres adalah bagian dari kehidupan sehari-hari yang bisa memicu performa baik, sedangkan distres terjadi ketika seseorang tidak mampu lagi beradaptasi/mengatasi tekanan sehingga menimbulkan penderitaan fisik dan emosional.",
+            "C. Stres hanya dirasakan oleh anak-anak, sedangkan distres dirasakan oleh orang dewasa.",
+            "D. Stres membutuhkan penanganan psikiater, sedangkan distres dapat hilang dengan sendirinya tanpa bantuan.",
+            "E. Tidak ada perbedaan antara stres dan distres dalam PFA."
+        ],
+        answer: 1
+    },
+    {
+        q: "18. Seorang relawan PFA mendapati seorang lansia yang terus-menerus meratapi kehilangan tongkat jalannya pascabencana. Tindakan practical help paling tepat yang mencerminkan PFA adalah...",
+        options: [
+            "A. Menasihati lansia tersebut agar bersyukur karena nyawanya masih selamat.",
+            "B. Menganalisis alasan psikologis mengapa lansia tersebut sangat terikat pada tongkatnya.",
+            "C. Mendengarkan dengan empati dan membantunya mencari tongkat pengganti atau alat bantu jalan agar ia kembali mandiri.",
+            "D. Mendorong lansia tersebut untuk menceritakan sejarah hidupnya secara detail.",
+            "E. Merujuk lansia tersebut ke RS jiwa karena dinilai berlebihan."
+        ],
+        answer: 2
+    },
+    {
+        q: "19. Dalam memberikan PFA kepada anak-anak, komunikasi harus disesuaikan dengan usia perkembangan mereka. Manakah pendekatan yang SALAH dalam berkomunikasi dengan anak yang terdistres?",
+        options: [
+            "A. Berbicara dengan nada suara yang tenang dan lembut.",
+            "B. Menggunakan bahasa yang sederhana dan mudah dipahami anak.",
+            "C. Memaksa anak untuk menceritakan kembali peristiwa menakutkan yang baru dialaminya secara detail.",
+            "D. Memberikan kesempatan anak untuk dekat dengan orang tua atau pengasuhnya.",
+            "E. Mendengarkan dengan sabar saat anak mengungkapkan perasaannya."
+        ],
+        answer: 2
+    },
+    {
+        q: "20. Prolonged grief (duka cita berkepanjangan) memiliki karakteristik khusus yang membedakannya dari respons duka cita awal. Ciri utama dari prolonged grief adalah...",
+        options: [
+            "A. Reaksi histeris yang terjadi tepat 5 menit setelah kejadian bencana.",
+            "B. Kesulitan menerima dan beradaptasi dengan kehilangan dalam jangka waktu yang lama sehingga mengganggu fungsi kehidupan sehari-hari.",
+            "C. Keinginan untuk segera mencari pengganti orang yang hilang.",
+            "D. Kemampuan untuk kembali beraktivitas normal dalam kurun waktu kurang dari 24 jam.",
+            "E. Rasa gembira berlebihan untuk menutupi kesedihan."
+        ],
+        answer: 1
+    },
+    {
+        q: "21. Mengapa PFA dapat dilakukan oleh siapa saja (relawan, masyarakat umum) dan tidak terbatas pada profesional kesehatan mental saja?",
+        options: [
+            "A. Karena PFA bukan merupakan terapi atau konseling profesional, melainkan pertolongan praktis dan dukungan emosional dasar yang keterampilannya mudah dipelajari.",
+            "B. Karena profesional kesehatan mental tidak diperbolehkan turun ke lokasi bencana.",
+            "C. Karena PFA tidak memerlukan rasa empati dan keterampilan mendengarkan.",
+            "D. Karena PFA difokuskan untuk menyembuhkan penyakit gangguan jiwa berat di lapangan.",
+            "E. Karena PFA hanya dilakukan saat tidak ada obat-obatan medis di lokasi bencana."
+        ],
+        answer: 0
+    },
+    {
+        q: "22. Dalam situasi krisis akibat konflik bersenjata, seorang relawan PFA merasa pandangan pribadinya sangat bertentangan dengan kelompok masyarakat yang dibantunya. Prinsip etika PFA apa yang harus diterapkan relawan tersebut?",
+        options: [
+            "A. Menolak memberikan bantuan kepada kelompok tersebut.",
+            "B. Mengesampingkan prasangka/bias pribadi dan memberikan bantuan tanpa menghakimi (non-judgmental).",
+            "C. Menasihati kelompok tersebut agar mengubah pandangan hidup mereka.",
+            "D. Memberikan bantuan tetapi dengan standar pelayanan yang lebih rendah.",
+            "E. Mengkritik kebiasaan kelompok tersebut di depan umum."
+        ],
+        answer: 1
+    },
+    {
+        q: "23. Seorang korban gempa bumi mengurung diri, tidak mau makan, dan tidak membersihkan diri selama beberapa hari meskipun fasilitas air dan makanan tersedia memadai. Reaksi ini menandakan...",
+        options: [
+            "A. Penyesuaian diri yang normal terhadap kondisi darurat.",
+            "B. Penyintas hanya membutuhkan waktu untuk istirahat tanpa gangguan.",
+            "C. Tanda distres berat yang memerlukan rujukan (referral) ke layanan spesialis/kesehatan mental.",
+            "D. Bahwa penyintas telah menerapkan strategi self-care dengan baik.",
+            "E. Bahwa PFA telah berhasil diberikan kepada penyintas."
+        ],
+        answer: 2
+    },
+    {
+        q: "24. Manakah frasa komunikasi yang PALING SESUAI digunakan oleh relawan PFA saat menerapkan langkah LISTEN pada orang yang terdistres?",
+        options: [
+            "A. 'Kamu seharusnya tidak perlu merasa sedih seperti ini.'",
+            "B. 'Saya mengerti ini sangat berat buat Kamu, Saya ada di sini mendampingi Kamu.'",
+            "C. 'Saya tahu persis apa yang harus Kamu lakukan, dengarkan nasihat Saya.'",
+            "D. 'Jangan menangis lagi, hal ini sudah terjadi dan tidak bisa diubah.'",
+            "E. 'Coba ceritakan dari awal sampai akhir secara detail apa yang Kamu lihat!'"
+        ],
+        answer: 1
+    },
+    {
+        q: "25. Mengapa evaluasi Safety and Security Risks menjadi hal paling awal yang dinilai dalam langkah LOOK sebelum memberikan PFA?",
+        options: [
+            "A. Untuk memastikan bahwa relawan mendapat penghargaan atas keberaniannya.",
+            "B. Untuk memastikan keselamatan diri relawan dan penyintas agar tidak terpapar bahaya susulan yang lebih besar.",
+            "C. Agar relawan bisa mengambil foto lokasi bencana untuk laporan.",
+            "D. Untuk membatasi jumlah penyintas yang ingin meminta bantuan.",
+            "E. Karena pemeriksaan keamanan adalah formalitas administrasi sebelum membagikan obat."
+        ],
+        answer: 1
+    }
+];
+
+let currentQuestion = 0;
+let score = 0;
+
+const questionNumberEl = document.getElementById('question-number');
+const questionTextEl = document.getElementById('question-text');
+const optionsContainerEl = document.getElementById('options-container');
+const nextBtn = document.getElementById('next-btn');
+const scoreCounterEl = document.getElementById('score-counter');
+const progressBarEl = document.getElementById('progress-bar');
+
+function loadQuestion() {
+    const q = quizData[currentQuestion];
+    questionNumberEl.innerText = `Soal ${currentQuestion + 1} dari ${quizData.length}`;
+    questionTextEl.innerText = q.q;
+    
+    // Update progress bar
+    const progress = ((currentQuestion + 1) / quizData.length) * 100;
+    progressBarEl.style.width = `${progress}%`;
+
+    optionsContainerEl.innerHTML = '';
+    nextBtn.disabled = true;
+
+    q.options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(index);
+        optionsContainerEl.appendChild(btn);
+    });
+}
+
+function selectOption(selectedIndex) {
+    const q = quizData[currentQuestion];
+    const buttons = optionsContainerEl.getElementsByClassName('option-btn');
+
+    for (let i = 0; i < buttons.length; i++) {
+        buttons[i].disabled = true;
+        if (i === q.answer) {
+            buttons[i].classList.add('correct');
+        }
+        if (i === selectedIndex && selectedIndex !== q.answer) {
+            buttons[i].classList.add('incorrect');
+        }
+    }
+
+    if (selectedIndex === q.answer) {
+        score++;
+        scoreCounterEl.innerText = `Skor: ${score}`;
+    }
+
+    nextBtn.disabled = false;
+}
+
+function nextQuestion() {
+    currentQuestion++;
+    if (currentQuestion < quizData.length) {
+        loadQuestion();
+    } else {
+        showResults();
+    }
+}
+
+function showResults() {
+    document.getElementById('quiz-screen').style.display = 'none';
+    const resultScreen = document.getElementById('result-screen');
+    resultScreen.style.display = 'block';
+
+    const finalScoreEl = document.getElementById('final-score');
+    const feedbackTextEl = document.getElementById('feedback-text');
+    
+    finalScoreEl.innerText = `${score} / ${quizData.length}`;
+
+    const percentage = (score / quizData.length) * 100;
+    if (percentage >= 80) {
+        feedbackTextEl.innerText = "Sangat Baik! Anda memahami konsep Psychological First Aid (PFA) dengan baik.";
+    } else if (percentage >= 60) {
+        feedbackTextEl.innerText = "Cukup Baik! Anda memiliki pemahaman dasar yang kuat, namun perlu memperdalam beberapa materi.";
+    } else {
+        feedbackTextEl.innerText = "Perlu Belajar Lagi. Pelajari kembali materi IFRC Psychosocial Centre Guide untuk memahami PFA secara komprehensif.";
+    }
+}
+
+function restartQuiz() {
+    currentQuestion = 0;
+    score = 0;
+    scoreCounterEl.innerText = `Skor: ${score}`;
+    document.getElementById('quiz-screen').style.display = 'block';
+    document.getElementById('result-screen').style.display = 'none';
+    loadQuestion();
+}
+
+// Inisialisasi kuis saat halaman dimuat
+loadQuestion();
+</script>
+
+</body>
+</html>
